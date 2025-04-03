@@ -1,0 +1,367 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({
+    Name = "Nexulity | Camp",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "NexulityCampConfigs",
+    IntroEnabled = true,
+    IntroText = "Welcome to Nexulity | Camp!"
+})
+local InfoTab = Window:MakeTab({
+    Name = "Info",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+local MainTab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+local MiscTab = Window:MakeTab({
+    Name = "Misc",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+local TeleportTab = Window:MakeTab({
+    Name = "Teleport",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+InfoTab:AddButton({
+    Name = "Copy Discord Link",
+    Callback = function()
+        setclipboard("https://discord.gg/XDkMEck4K4")
+        OrionLib:MakeNotification({
+            Name = "Link Copied!",
+            Content = "Discord link copied to clipboard successfully.",
+            Image = "rbxassetid://4483345998", -- Optional: Add an icon for the notification
+            Time = 5 -- Notification duration
+        })
+    end
+})
+InfoTab:AddParagraph("User Info", 
+    "Username: " .. game.Players.LocalPlayer.Name ..
+    "\nAccount Age: " .. game.Players.LocalPlayer.AccountAge .. " days" ..
+    "\nExecutor: " .. identifyexecutor()
+)
+InfoTab:AddParagraph("Server Info", 
+    "Player Count: " .. tostring(#game.Players:GetPlayers()) ..
+    "\nExploiters: Unknown" .. -- You can dynamically detect exploiters if supported by your executor
+    "\nServer Age: " .. math.floor(workspace.DistributedGameTime) .. " seconds"
+)
+MainTab:AddButton({
+    Name = "Auto Get Statue",
+    Callback = function()
+        for _, idol in ipairs(workspace.Idols:GetChildren()) do
+            if idol:FindFirstChild("Bag") then
+                local bag = idol:FindFirstChild("Bag"):FindFirstChild("hit")
+                bag.Transparency = 1
+                bag.CanCollide = false
+                bag.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+                task.wait(0.1)
+                idol:Destroy()
+            elseif idol:FindFirstChild("SafetyStatue") then
+                local statue = idol:FindFirstChild("SafetyStatue"):FindFirstChild("hit")
+                statue.Transparency = 1
+                statue.CanCollide = false
+                statue.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+                task.wait(0.1)
+            end
+        end
+    end
+})
+MainTab:AddButton({
+    Name = "Auto Win Obby",
+    Callback = function()
+        local finishPart = game.Workspace:FindFirstChild("Finish", true) -- Finds the "Finish" part anywhere in Workspace
+        if finishPart then
+            finishPart.CanCollide = false
+            finishPart.Transparency = 1
+            task.wait(0.1) -- A small delay for smoother execution
+            finishPart.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position -- Moves to player's position
+        end
+    end
+})
+MainTab:AddButton({
+    Name = "Auto Win Block Push",
+    Callback = function()
+        for _, block in ipairs(workspace:GetDescendants()) do
+            if block:IsA("Part") and block.Name == "SingularBox" then
+                local playerPosition = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+                local distance = (block.Position - playerPosition).Magnitude
+                if distance <= 100 then
+                    for _, goal in ipairs(workspace:GetDescendants()) do
+                        if goal:IsA("Part") and goal.Name == "Gold" then
+                            block.Position = goal.Position + Vector3.new(0, 3, 0)
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(goal.Position + Vector3.new(0, 3, 0))
+                            task.wait(0.1)
+                            break
+                        end
+                    end
+                    break
+                end
+            end
+        end
+    end
+})
+MainTab:AddButton({
+    Name = "Instant Eat Pancake",
+    Callback = function()
+        for _, object in ipairs(workspace:GetDescendants()) do
+            if object:IsA("Model") and object.Name == game.Players.LocalPlayer.Name then
+                local clickDetector = object:FindFirstChild("ClickDetector")
+                if clickDetector then
+                    for _ = 1, 2 do -- Fires the detector twice
+                        fireclickdetector(clickDetector)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+    end
+})
+MiscTab:AddButton({
+    Name = "Detect Exploiters",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local detectedExploiters = {}
+ 
+        for _, player in ipairs(Players:GetPlayers()) do
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if humanoid and rootPart then
+                -- Detect abnormal WalkSpeed or JumpPower values
+                if humanoid.WalkSpeed > 16 or humanoid.JumpPower > 50 then
+                    table.insert(detectedExploiters, player.Name .. " - Abnormal Movement")
+                end
+                -- Detect Teleportation (large sudden changes in position)
+                local previousPosition = rootPart.Position
+                task.wait(1) -- Small delay to compare positions
+                local newPosition = rootPart.Position
+                local distance = (newPosition - previousPosition).Magnitude
+                if distance > 100 then -- Threshold for teleportation
+                    table.insert(detectedExploiters, player.Name .. " - Teleportation")
+                end
+            end
+        end
+        -- Output Detected Exploiters
+        if #detectedExploiters > 0 then
+            OrionLib:MakeNotification({
+                Name = "Exploiters Detected",
+                Content = "Potential exploiters found:\n" .. table.concat(detectedExploiters, "\n"),
+                Image = "rbxassetid://4483345998",
+                Time = 10 -- Notification duration
+            })
+        else
+            OrionLib:MakeNotification({
+                Name = "No Exploiters",
+                Content = "No exploiters detected in this server.",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        end
+    end
+})
+MainTab:AddButton({
+    Name = "Break Spleef",
+    Callback = function()
+        for _, spleefPart in ipairs(game.Workspace.Assets:GetDescendants()) do
+            if spleefPart:IsA("BasePart") and spleefPart.Name == "SpleefPart" then
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, spleefPart, 0)
+                task.wait(0.05) 
+            end
+        end
+    end
+})
+MainTab:AddButton({
+    Name = "Kill Everyone In Sword Fight",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/eMsKX4nF"))()
+    end
+})
+MiscTab:AddSection({
+    Name = "Only use when the vote is about to end"
+})
+MiscTab:AddButton({
+    Name = "Reset Day",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        if player.Character then
+            -- Remove all accessories and clothing
+            for _, child in ipairs(player.Character:GetChildren()) do
+                if child:IsA("Accessory") or child:IsA("Clothing") or child:IsA("Shirt") or child:IsA("Pants") then
+                    child:Destroy()
+                end
+            end
+            player.Character.Humanoid:TakeDamage(player.Character.Humanoid.Health)
+        end
+    end
+})
+MainTab:AddToggle({
+    Name = "Auto Collect Gems & Coins",
+    Default = false,
+    Callback = function(Value)
+        collectCoinsAndGemsLoop = Value -- Enable or disable the loop
+        while collectCoinsAndGemsLoop do
+            task.wait(0.1) -- A slight delay for efficiency
+            for _, item in ipairs(workspace:GetDescendants()) do
+                if item:IsA("BasePart") and (item.Name == "Gem" or item.Name == "Coin") then
+                    item.Transparency = 1
+                    item.CanCollide = false
+                    item.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+                end
+            end
+        end
+    end
+})
+MiscTab:AddToggle({
+    Name = "Notify Votes",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            if not _G.VoteConnection then
+                _G.VoteConnection = game.ReplicatedStorage.Season.Voting.Votes.ChildAdded:Connect(function(vote)
+                    local PlayerVoted = game.ReplicatedStorage.Season.Players[vote.Value].Value
+                    local PlayerPicked = game.ReplicatedStorage.Season.Players[vote.Name].Value
+                    local message = PlayerVoted .. " voted for " .. PlayerPicked
+                    
+                    OrionLib:MakeNotification({
+                        Name = "Votes Notification",
+                        Content = message,
+                        Image = "rbxassetid://4483345998", -- Optional: Replace with a custom image ID
+                        Time = 0
+                    })
+                end)
+            end
+        else
+            if _G.VoteConnection then
+                _G.VoteConnection:Disconnect()
+                _G.VoteConnection = nil
+            end
+        end
+    end
+})
+MainTab:AddToggle({
+    Name = "Auto-Win Math Mania",
+    Default = false,
+    Callback = function(Value)
+        local state = Value
+        local questionIndex = 1 -- Start at the first math question
+        while state do
+            -- Get the current math question and solve it
+            local mathQuestion = game:GetService("Players").LocalPlayer.PlayerGui.MathMania[questionIndex]
+            if mathQuestion then
+                local equation = mathQuestion.MainText.Text:gsub("[=?]", ""):gsub("%s+", "") -- Remove unwanted characters
+                local solution = loadstring("return " .. equation)()
+                mathQuestion.Box.Text = solution -- Input the solution into the text box
+                -- Click the "Enter" button to submit the answer
+                local button = mathQuestion.Enter
+                for _, event in ipairs({"MouseButton1Click", "MouseButton1Down", "Activated"}) do
+                    for _, connection in ipairs(getconnections(button[event])) do
+                        connection:Fire()
+                    end
+                end
+                questionIndex = questionIndex + 1 -- Move to the next question
+            else
+                -- End loop if no more questions
+                break
+            end
+        end
+    end
+})
+MiscTab:AddTextbox({
+    Name = "Buy Character",
+    Default = "",
+    TextDisappear = false,
+    Placeholder = "Bypasses ChatFilter",
+    Numeric = false, -- Allows text input
+    MaxCharacters = nil, -- Unlimited input length
+    Callback = function(Value)
+        local args = {
+            [1] = "Character",
+            [2] = Value
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Buy"):FireServer(unpack(args))
+    end
+})
+MiscTab:AddButton({
+    Name = "See Everyone's User (Head)",
+    Callback = function()
+        for _, object in ipairs(game.Workspace:GetDescendants()) do
+            if object:IsA("TextLabel") then
+                local currentText = object.Text
+                object.Text = currentText .. " (" .. object.Parent.Parent.Parent.Parent.Name .. ")"
+            end
+        end
+    end
+})
+MiscTab:AddButton({
+    Name = "Chat Spy",
+    Callback = function()
+        loadstring(game:HttpGet(('https://pastebin.com/raw/LFK0dcut'), true))()
+    end
+})
+MiscTab:AddButton({
+    Name = "Free Comeback (Female)",
+    Callback = function()
+        local args = {
+            [1] = "Gender",
+            [2] = "Female"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Buy"):FireServer(unpack(args))
+    end
+})
+MiscTab:AddButton({
+    Name = "Free Comeback (Male)",
+    Callback = function()
+        local args = {
+            [1] = "Gender",
+            [2] = "Male"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Buy"):FireServer(unpack(args))
+    end
+})
+TeleportTab:AddButton({
+    Name = "House",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(134, -20.7499866, -439.449951, 0.529884458, -0, -0.848069847, 0, 1, -0, 0.848069847, 0, 0.529884458)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Dock",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(62, -15, -306)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Voting Area",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-32, 101, -501)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Confessionals",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(308, -9, -327)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Challenge Area",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(135, -4, -204)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Exile",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-114, -8, -150)
+    end
+})
+TeleportTab:AddButton({
+    Name = "Spectator Island",
+    Callback = function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-2, -7, 20)
+    end
+})
+OrionLib:Init()
